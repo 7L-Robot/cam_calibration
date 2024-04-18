@@ -3,6 +3,8 @@ This repository is mainly for camera intrinsic and extrinsic calibration
 
 Synthetic experiments are conducted in [PyBullet](https://pybullet.org) simulator.
 
+内参计算的时候有个畸变参数保存了下来`coff_dis`,仿真测试下发现这个变量设为None效果反而更好
+
 #### 1. special opencv
 ```
 pip install opencv-contrib-python==4.6.0.66

@@ -54,13 +54,11 @@ if __name__ == '__main__':
 
     board_type = '_'.join(board_name.split('_')[1:4])
     board_col, board_row, length, sep, start_id = map(lambda x: int(x), board_name.split('_')[4:])
-    
 
     cali = Extrinsic_Calibrator(board_type, board_col, board_row, 
                                 board_grid_len=length / 10000, # 米，上面图片名字记录的是毫米mm
                                 board_grid_gap=sep / 10000, # 米，上面图片名字记录的是毫米mm
                                 board_grid_start_id=start_id)
-
 
     x,y,z,w = Rotation.from_rotvec([0, np.pi/2, 0]).as_quat()
     q = [w,x,y,z]
@@ -74,10 +72,11 @@ if __name__ == '__main__':
     except:
         print("no cam_in, please run 'example_intrinsic.py' at first")
         exit(-1)
-    # cam_dist = None
+    # NOTE 畸变参数不用反而更准
+    cam_dist = None
 
-    y_step = 3
-    z_step = 3
+    y_step = 4
+    z_step = 4
     count = 0
 
     ee_to_base_poses = []
@@ -87,16 +86,18 @@ if __name__ == '__main__':
     for y in range(y_step):
         for z in range(z_step):
             
-            x = 0.5
-            
-            angle_step = np.pi/15
-            angle_step_2 = np.pi/15
+            if eye_on_hand:
+                x = 0.7
+                rot_step = 3
+                angle_gap = np.pi/18
+            else:
+                x = 0.5
+                rot_step = 4
+                angle_gap = np.pi/10
 
-            rot_step = 4
             rot_start = (rot_step - 1)/2
-
-            angle_gap = np.pi/10
             angle_start = rot_start * angle_gap
+
             
             for k in range(rot_step):
                 rv = np.random.rand()
@@ -136,13 +137,17 @@ if __name__ == '__main__':
                 board_imgs.append(bgr)
                 ee_to_base_poses.append(mat)
         
-    eye_to_hand_mat = cali.hand_eye_calibration(board_imgs, ee_to_base_poses, not eye_on_hand, cam_in, cam_dist)
+    eye_to_hand_mat = cali.hand_eye_calibration(board_imgs, ee_to_base_poses, eye_on_hand, cam_in, cam_dist)
 
 
-    print('GT: ', cam.pose[:3,3])
+    if eye_on_hand:
+        print('GT: [0.2 0.1 0.0]')
+        # See panda_hand_cam.urdf line 295
+    else:
+        print('GT: ', cam.pose[:3,3])
     print('Result: ', eye_to_hand_mat[:3,3])
 
     
-    bot.open()
+    # bot.open()
 
     input("Press enter to close")

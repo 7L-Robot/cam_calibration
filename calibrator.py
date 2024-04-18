@@ -110,7 +110,7 @@ class Extrinsic_Calibrator(object):
         return board_to_cam_poses
         
         
-    def hand_eye_calibration(self, board_imgs, ee_to_base_poses, is_eye_to_hand, cam_in, cam_dist=None ):
+    def hand_eye_calibration(self, board_imgs, ee_to_base_poses, eye_on_hand, cam_in, cam_dist=None ):
         
         ee_to_base_poses = np.array(ee_to_base_poses)
 
@@ -120,7 +120,7 @@ class Extrinsic_Calibrator(object):
         board_to_cam_trans = board_to_cam_poses[:,:3,3]
 
 
-        if is_eye_to_hand:
+        if not eye_on_hand:
             base_to_ee_poses = np.linalg.inv(ee_to_base_poses)
 
             base_to_ee_rots = base_to_ee_poses[:, :3, :3]

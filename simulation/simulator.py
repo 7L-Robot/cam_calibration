@@ -2,6 +2,125 @@ from scipy.spatial.transform import Rotation as R
 import pybullet as p
 import numpy as np
 
+class Robot():
+    def __init__(self, robot_id, cam, eye_on_hand) -> None:
+        joint_num = p.getNumJoints(robot_id)
+
+        joints = []
+        names = []
+
+        self.cam = cam
+
+        self.eye_on_hand = eye_on_hand
+
+        for j in range(joint_num):
+            info = p.getJointInfo(robot_id, j)
+            joint_name = info[1]
+            joint_type = info[2]
+
+            if joint_type in [0, 1]:
+                joints.append(j)
+                names.append(joint_name)
+
+        self.joints = joints
+        self.names = names
+        self.robot_id = robot_id
+        self.joint_num = len(joints)
+
+        self.init_joints = np.array([0, 0.2, 0.0, -2.62, 0.0, 2.94, 0.785, 0.04, 0.04])
+
+        self.set_joints(self.init_joints)
+    
+    def get_joints(self):
+        all_joints = p.getJointStates(self.robot_id, self.joints)
+
+        joint_poses = []
+        for joint in all_joints:
+            joint_poses.append(joint[0])
+
+        return np.array(joint_poses)
+
+    def close(self):
+        self.move_to_joint([0,0], [9, 10], 30, 20)
+
+    def open(self):
+        self.move_to_joint([1,1], [9, 10], 30, 20)
+
+    def follow_path(self, path):
+
+        for p in path:
+            self.move_to_joint(p)
+
+    def move_to_joint(self, joints_values, joints_ids=None, max_force=60, loop_num=10):
+        if joints_ids is None:
+            joints_ids = self.joints
+        
+        for j in range( len(joints_ids) ):
+            # pybullet.setJointMotorControl2(
+            #     self.robot_id,
+            #     joints_ids[j],
+            #     pybullet.POSITION_CONTROL,
+            #     joints_values[j],
+            #     force = max_force)
+            pass
+        self.set_joints(joints_values, joints_ids)
+        
+        # for _ in range(loop_num):
+        #     pybullet.stepSimulation()
+            # time.sleep(1./240.)
+
+        # while True:
+            # s = np.sum( np.abs(self.get_joints() - np.array(joints)) ) 
+            # if s < 1e-3:
+            #     break
+
+    def set_joints(self, joints_values, joints_ids=None):
+        if joints_ids is None:
+            joints_ids = self.joints
+
+        for j in range( len(joints_ids) ):
+            p.resetJointState(
+                self.robot_id,
+                joints_ids[j],
+                joints_values[j] )
+
+    def move_to(self, pos, quat, start_joints=None, rrt_range=0.1):
+        if start_joints is None:
+            start_joints = self.get_joints()
+
+        # plan_result = planner.plan_birrt([pos, quat], start_joints, rrt_range=rrt_range, seed=1024)
+        ee_link = 8
+        w, x,y,z = quat
+        plan = p.calculateInverseKinematics(self.robot_id, ee_link, pos, [x,y,z,w])
+        
+        # if 'position' not in plan_result:
+        #     plan = []
+        # else:
+        if len(plan) > 0:
+            # plan = plan_result["position"]  # [nq, N]
+            # rest_num = bot.joint_num - plan.shape[1]
+            # if rest_num > 0:
+            #     rest_joints = start_joints[ -rest_num: ][None, :].repeat( len(plan) , axis=0)
+            #     plan = np.concatenate( [plan, rest_joints], axis=1 )
+            plan = [plan]
+
+            plan = list(plan)
+
+            # bot.follow_path(plan)
+            self.move_to_joint(plan[-1])
+
+        # for _ in range(100):
+        #     pybullet.stepSimulation()
+
+        if self.eye_on_hand:
+            link_state = p.getLinkState(self.robot_id, 11)
+            pos, quat = link_state[:2]
+            rot = R.from_quat(quat).as_matrix()
+            self.cam.set_pose(pos, pos + rot[:3,2] * 0.1, rot[:3,0])
+
+        self.cam.get_camera_image()
+        
+
 
 class Camera(object):
     """

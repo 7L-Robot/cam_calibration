@@ -18,7 +18,7 @@ parser.add_argument('--num_id',
                          'only 50, 100, 250, 1000 are valid (default 50).')
 parser.add_argument('--type',
                     type=str,
-                    default='a',
+                    default='m',
                     help='m for single marker, a for aruco board, and c for charuco board')
 parser.add_argument('--id',
                     type=int,
@@ -31,7 +31,7 @@ parser.add_argument('--num_col',
                     help='the number of the aruco markers in a row of the board.')
 parser.add_argument('--num_row',
                     type=int,
-                    default=7,
+                    default=5,
                     help='the number of the aruco markers in a column of the board.')
 parser.add_argument('--length',
                     type=float,

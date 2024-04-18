@@ -7,6 +7,5 @@ Ka 1 1 1
 Ks 0.25 0.25 0.25
 Ke 0 0 0
 illum 1
-# map_Kd Aruco_DICT_7x7_50_4_4_40_10_0.png
-map_Kd ArUco_DICT_7X7_50_5_7_50_10_0_2180028.png
+map_Kd ArUco_DICT_7X7_50_5_7_500_100_0.png
 

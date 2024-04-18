@@ -283,7 +283,7 @@
   <link name="board">
     <visual>
       <geometry>
-        <mesh filename="package://board/ArUco_DICT_7X7_50_5_7_50_10_0.obj"/>
+        <mesh filename="package://board/ArUco_DICT_7X7_50_5_7_500_100_0.obj"/>
         <!-- <mesh filename="package:///meshes/collision/finger.stl"/> -->
       </geometry>
     </visual>

@@ -1,9 +1,12 @@
 from scipy.spatial.transform import Rotation as R
 import pybullet as p
 import numpy as np
+import time
+from PIL import Image
+
 
 class Robot():
-    def __init__(self, robot_id, cam, eye_on_hand) -> None:
+    def __init__(self, robot_id, cam, eye_on_hand, use_force=False) -> None:
         joint_num = p.getNumJoints(robot_id)
 
         joints = []
@@ -29,6 +32,8 @@ class Robot():
 
         self.init_joints = np.array([0, 0.2, 0.0, -2.62, 0.0, 2.94, 0.785, 0.04, 0.04])
 
+        self.use_force = use_force
+
         self.set_joints(self.init_joints)
     
     def get_joints(self):
@@ -44,7 +49,7 @@ class Robot():
         self.move_to_joint([0,0], [9, 10], 30, 20)
 
     def open(self):
-        self.move_to_joint([1,1], [9, 10], 30, 20)
+        self.move_to_joint([0.04,0.04], [9, 10], 30, 20)
 
     def follow_path(self, path):
 
@@ -55,24 +60,25 @@ class Robot():
         if joints_ids is None:
             joints_ids = self.joints
         
-        for j in range( len(joints_ids) ):
-            # pybullet.setJointMotorControl2(
-            #     self.robot_id,
-            #     joints_ids[j],
-            #     pybullet.POSITION_CONTROL,
-            #     joints_values[j],
-            #     force = max_force)
-            pass
-        self.set_joints(joints_values, joints_ids)
+        if self.use_force:
+            for j in range( len(joints_ids) ):
+                p.setJointMotorControl2(
+                    self.robot_id,
+                    joints_ids[j],
+                    p.POSITION_CONTROL,
+                    joints_values[j],
+                    force = max_force)
+            for _ in range(loop_num):
+                p.stepSimulation()
+                time.sleep(1./240.)
+        else:
+            self.set_joints(joints_values, joints_ids)
         
-        # for _ in range(loop_num):
-        #     pybullet.stepSimulation()
-            # time.sleep(1./240.)
-
         # while True:
             # s = np.sum( np.abs(self.get_joints() - np.array(joints)) ) 
             # if s < 1e-3:
             #     break
+
 
     def set_joints(self, joints_values, joints_ids=None):
         if joints_ids is None:
@@ -90,8 +96,9 @@ class Robot():
 
         # plan_result = planner.plan_birrt([pos, quat], start_joints, rrt_range=rrt_range, seed=1024)
         ee_link = 8
-        w, x,y,z = quat
-        plan = p.calculateInverseKinematics(self.robot_id, ee_link, pos, [x,y,z,w])
+        # w, x,y,z = quat
+        # plan = p.calculateInverseKinematics(self.robot_id, ee_link, pos, [x,y,z,w])
+        plan = p.calculateInverseKinematics(self.robot_id, ee_link, pos, quat)
         
         # if 'position' not in plan_result:
         #     plan = []
@@ -118,8 +125,21 @@ class Robot():
             rot = R.from_quat(quat).as_matrix()
             self.cam.set_pose(pos, pos + rot[:3,2] * 0.1, rot[:3,0])
 
-        self.cam.get_camera_image()
+        rgb, depth, mask = self.cam.get_camera_image()
         
+        # index = time.time()
+        image = Image.fromarray(rgb)
+        image.save(f"./tmp/ex.png")
+        # asyncio.run(update_image('ws://localhost:8765', index))
+
+    def get_ee_pose(self):
+        
+        link_state = p.getLinkState(self.robot_id, 8)
+        pos, quat = link_state[:2]
+        mat = np.eye(4)
+        mat[:3,:3] = R.from_quat(quat).as_matrix()
+        mat[:3,3] = pos
+        return mat
 
 
 class Camera(object):

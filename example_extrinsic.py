@@ -104,10 +104,11 @@ if __name__ == '__main__':
                 
                 if eye_on_hand:                
                     if rv > 0.5:
-                        q = (Rotation.from_rotvec([-angle_start + k * angle_gap, -angle_start + k * angle_gap, -angle_start + k * angle_gap]) * Rotation.from_quat([0, 1, 0, 0])).as_quat()
+                        q = (Rotation.from_rotvec([-angle_start + k * angle_gap, -angle_start + k * angle_gap, -angle_start + k * angle_gap]) * Rotation.from_quat([0, 1, 0, 0]))
                     else:
-                        q = (Rotation.from_rotvec([-angle_start  + k * angle_gap, -angle_start + k * angle_gap, angle_start - k * angle_gap]) * Rotation.from_quat([0, 1, 0, 0])).as_quat()
-        
+                        q = (Rotation.from_rotvec([-angle_start  + k * angle_gap, -angle_start + k * angle_gap, angle_start - k * angle_gap]) * Rotation.from_quat([0, 1, 0, 0]))
+                    q = (q * Rotation.from_rotvec([0, 0, np.pi])).as_quat()
+
                     bot.move_to([ 0.235 + z * 0.1/z_step, -0.1 + y * 0.3/y_step, x ], q)
 
                 else:
@@ -115,10 +116,8 @@ if __name__ == '__main__':
                         more_rot = Rotation.from_rotvec([-angle_start + k * angle_gap, -angle_start + k * angle_gap, -angle_start + k * angle_gap])
                     else:
                         more_rot = Rotation.from_rotvec([-angle_start + k * angle_gap, -angle_start + k * angle_gap, angle_start - k * angle_gap])
-                    _x, _y, _z, _w = (more_rot * Rotation.from_rotvec([0, np.pi/2, 0])).as_quat()
-                    
-                    q = [_w,_x,_y,_z]
-
+                    q = (more_rot * Rotation.from_rotvec([0, np.pi/2, 0])).as_quat()
+                
                     bot.move_to([ x, -0.2 + y * 0.4/y_step, 0.55 - z * 0.3/z_step ], q)
 
                 link_state = pybullet.getLinkState(robot, 8)
